@@ -9,6 +9,9 @@
   "dependencies": {
     "express": "latest",
     "cors": "latest",
-    "openai": "latest"
+    "openai": "latest",
+    "dotenv": "latest",
+    "node-fetch": "latest"
   }
 }
+
