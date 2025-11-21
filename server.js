@@ -1,9 +1,11 @@
 import express from "express";
-import fetch from "node-fetch";
 import cors from "cors";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
@@ -12,6 +14,8 @@ app.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
     const apiKey = process.env.OPENAI_API_KEY;
+
+    if (!apiKey) return res.json({ reply: "Server belum ada API Key!" });
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -27,18 +31,18 @@ app.post("/chat", async (req, res) => {
 
     const data = await response.json();
 
-    // Jika API error → lempar balik ke frontend
+    // Error dari API
     if (data.error) {
       console.log("API ERROR:", data.error);
       return res.json({ reply: "Error dari API: " + data.error.message });
     }
 
+    // Ambil reply dengan aman
     const reply = data?.choices?.[0]?.message?.content;
-
-    res.json({ reply: reply || "Tidak ada balasan dari model." });
+    res.json({ reply: reply ?? "Bot tidak memberikan jawaban." });
 
   } catch (err) {
-    console.error(err);
+    console.error("Server Error:", err);
     res.json({ reply: "Terjadi kesalahan server." });
   }
 });
