@@ -1,35 +1,47 @@
 import express from "express";
+import fetch from "node-fetch";
 import cors from "cors";
-import OpenAI from "openai";
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
-
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
-
-app.post("/api/chat", async (req, res) => {
-    try {
-        const text = req.body.message;
-
-        const result = await client.responses.create({
-            model: "gpt-4.1-mini",
-            input: text
-        });
-
-        return res.json({
-            reply: result.output_text
-        });
-
-    } catch (err) {
-        console.log("Error:", err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
 app.use(express.static("public"));
 
+app.post("/chat", async (req, res) => {
+  try {
+    const userMessage = req.body.message;
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: userMessage }]
+      })
+    });
+
+    const data = await response.json();
+
+    // Jika API error → lempar balik ke frontend
+    if (data.error) {
+      console.log("API ERROR:", data.error);
+      return res.json({ reply: "Error dari API: " + data.error.message });
+    }
+
+    const reply = data?.choices?.[0]?.message?.content;
+
+    res.json({ reply: reply || "Tidak ada balasan dari model." });
+
+  } catch (err) {
+    console.error(err);
+    res.json({ reply: "Terjadi kesalahan server." });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server jalan di port " + PORT));
+app.listen(PORT, () => console.log("Server running on port " + PORT));
