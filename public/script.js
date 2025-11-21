@@ -15,12 +15,12 @@ async function sendMsg() {
 
     const d = await r.json();
     const reply = d.reply || "Bot tidak memberikan jawaban.";
-    chatDiv.innerHTML += `<p><b>Bot:</b> ${reply}</p>`;
+    const source = d.source === "OpenAI" ? "(AI)" : "(Simulasi)";
 
-    // Scroll otomatis ke bawah
+    chatDiv.innerHTML += `<p><b>Bot ${source}:</b> ${reply}</p>`;
     chatDiv.scrollTop = chatDiv.scrollHeight;
 
   } catch (err) {
-    chatDiv.innerHTML += `<p><b>Bot:</b> Terjadi kesalahan saat menghubungi server.</p>`;
+    chatDiv.innerHTML += `<p><b>Bot (Simulasi):</b> Terjadi kesalahan saat menghubungi server.</p>`;
   }
 }
