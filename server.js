@@ -10,13 +10,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
+// Rule-based fallback function
+function fallbackReply(message) {
+  message = message.toLowerCase();
+  if (message.includes("halo")) return "Halo! Ada yang bisa saya bantu?";
+  if (message.includes("siapa kamu")) return "Saya chatbot hybrid simulasi.";
+  if (message.includes("apa kabar")) return "Baik, terima kasih! Kamu bagaimana?";
+  return "Maaf, saya tidak mengerti. Bisa coba pertanyaan lain?";
+}
+
 app.post("/chat", async (req, res) => {
+  const userMessage = req.body.message;
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  // Kalau API key tidak ada, langsung pakai fallback
+  if (!apiKey) {
+    const reply = fallbackReply(userMessage);
+    return res.json({ reply, source: "simulasi" });
+  }
+
   try {
-    const userMessage = req.body.message;
-    const apiKey = process.env.OPENAI_API_KEY;
-
-    if (!apiKey) return res.json({ reply: "Server belum ada API Key!" });
-
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -31,19 +44,20 @@ app.post("/chat", async (req, res) => {
 
     const data = await response.json();
 
-    // Error dari API
-    if (data.error) {
-      console.log("API ERROR:", data.error);
-      return res.json({ reply: "Error dari API: " + data.error.message });
+    // Jika API error / quota habis → pakai fallback
+    if (data.error || !data.choices?.[0]?.message?.content) {
+      console.log("API ERROR:", data.error || "No content");
+      const reply = fallbackReply(userMessage);
+      return res.json({ reply, source: "simulasi" });
     }
 
-    // Ambil reply dengan aman
-    const reply = data?.choices?.[0]?.message?.content;
-    res.json({ reply: reply ?? "Bot tidak memberikan jawaban." });
+    const reply = data.choices[0].message.content;
+    res.json({ reply, source: "OpenAI" });
 
   } catch (err) {
     console.error("Server Error:", err);
-    res.json({ reply: "Terjadi kesalahan server." });
+    const reply = fallbackReply(userMessage);
+    res.json({ reply, source: "simulasi" });
   }
 });
 
