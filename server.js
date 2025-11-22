@@ -14,8 +14,9 @@ app.use(express.static("public"));
 function fallbackReply(message) {
   message = message.toLowerCase();
   if (message.includes("halo")) return "Halo! Ada yang bisa saya bantu?";
-  if (message.includes("siapa kamu")) return "Saya chatbot hybrid simulasi.";
-  if (message.includes("apa kabar")) return "Baik, terima kasih! Kamu bagaimana?";
+  if (message.includes("siapa kamu?")) return "Saya chatbot hybrid simulasi.";
+  if (message.includes("apa kabar?")) return "Baik, terima kasih! Kamu bagaimana?";
+  if (message.includes("aku butuh bantuanmu")) return "Baik, aku akan membantumu.";
   return "Maaf, saya tidak mengerti. Bisa coba pertanyaan lain?";
 }
 
